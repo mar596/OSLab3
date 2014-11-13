@@ -49,6 +49,7 @@ private:
 	bool check_manager(int resource_type);
 	bool checkDeadlock();
 	void handleDeadlock();
+	bool pretendToGrantRequest(int task_number, int resource_type, int number_requested);
 
 	void printOutput();
 

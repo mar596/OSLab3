@@ -9,7 +9,7 @@
 
 Operating_System::Operating_System(string file){
 
-	cycles = 0;
+	cycles;
 
 	//open the file 
 	ifstream input_file;
@@ -45,8 +45,15 @@ Operating_System::Operating_System(string file){
 		cout << "Failed to Open File!";
 	}
 	input_file.close();
+
+	runOptimistic();
+	runBankers();
 }
-//TODO --> make sure tasks are in order -- needs to be pushed in order
+//TODO --> make sure tasks are in order -- needs to be pushed in order so tasks[0] represents first task
+
+//Creates a new task pointer and adds it to the tasks vector 
+//Increase the waiting time of tasks by 1 because delay does not matter
+//for Initiate, increase cycles by 1
 void Operating_System::Initiate(int task_number, int resource_type, int initial_claim){
 	Task *t = new Task(task_number, initial_claim, cycles);
 	tasks.push_back(t); 
@@ -101,13 +108,6 @@ void Operating_System::increaseWaitingTimeOfAllWaitingTasks(int number){
 	}
 }
 
-bool Operating_System::checkSafeState(){
-	if( safe ){
-		return true;
-	}
-	return false;
-}
-
 bool Operating_System::pretendToGrantRequest(int task_number, int resource_type, int number_requested){
 	tasks[task_number-1]->addResources(resource_type, number_requested);
 	tasks[task_number-1]->setMaxAdditional(number_requested);
@@ -152,16 +152,16 @@ bool Operating_System::checkDeadlock(){
 //do this until deadlock is resolved and resource manager has enough resources to satisfy
 //the next request in the waiting queue
 void Operating_System::handleDeadlock(){
-	while(!canResourceRequestBeSatisfied(waiting_request_instructions_queue.front()->resource_type, waiting_request_instructions_queue.front()->number_requested)){
+	while(!canResourceRequestBeSatisfied(waiting_request_instructions_queue.front()->resource_type, waiting_request_instructions_queue.front()->arg5)){
 		resources[waiting_request_instructions_queue.front()->resource_type-1]+= waiting_request_instructions_queue.front()->arg5;
 		waiting_request_instructions_queue.pop(); //abort the process 
 
 	}
 }
 
-void printOutput(){
+void Operating_System::printOutput(){
 	for(int i = 0; i < tasks.size(); i++){
-		cout << "Task" << tasks[i]->task_number << ".\n";
+		cout << "Task" << tasks[i]->getTaskNumber() << ".\n";
 		cout << "Time Taken: " << tasks[i]->getTimeNeededToFinish() << ".\n";
 		cout << "Waiting Time: " << tasks[i]->getTimeSpentWaiting() << ".\n";
 		cout << "Percentage of Time Spent Waiting:" << tasks[i]->getPercentageOfTimeSpentWaiting() << ".\n";
@@ -169,7 +169,7 @@ void printOutput(){
 }
 
 void Operating_System::runOptimistic(){
-
+	cycles = 0;
 	for(int i=0; i < allInstructions.size(); i++){
 		Instruction *currentInstruction = allInstructions[i];
 		if(currentInstruction->command == "initiate"){ //delay doesn't matter 
@@ -214,6 +214,7 @@ void Operating_System::runBankers(){
 	//  can be granted (i.e., if the result would now be safe). If so, the pending request is granted. Whether or not the request 
 	//  was granted, the manager checks to see if the next pending request can be granted, etc.
 	/////////////////////
+	cycles = 0;
 	for(int i=0; i< allInstructions.size(); i++){
 		Instruction *currentInstruction = allInstructions[i];
 		if(currentInstruction-> command == "initiate"){
@@ -222,24 +223,24 @@ void Operating_System::runBankers(){
 			}
 		}
 		if(currentInstruction->command == "request"){
-			if(pretendToGrantRequest(currentInstruction->task_number, currentInstruction->resource_type, currentInstruction->number_requested)){
+			if(pretendToGrantRequest(currentInstruction->task_number, currentInstruction->resource_type, currentInstruction->arg5)){
 				Request(currentInstruction->task_number, currentInstruction->delay, currentInstruction->resource_type, currentInstruction->arg5);
 			}
 			else{
-				blocked.push(currentInstruction);
+				blockedTasks.push(currentInstruction);
 			}
 		}
 		else if(currentInstruction->command == "release"){
 			Release(currentInstruction->task_number, currentInstruction->delay, currentInstruction->resource_type, currentInstruction->arg5);
-			for(int j=0; j < blocked.size(); j++){
-				Instruction currentlyBlocked = blocked.front();
-				blocked.pop();
-				if(canResourceRequestBeSatisfied(currentlyBlocked->resource_type, currentlyBlocked->number_requested)){
-					if(pretendToGrantRequest(currentlyBlocked->task_number, currentlyBlocked->resource_type, currentlyBlocked->number_requested)){
+			for(int j=0; j < blockedTasks.size(); j++){
+				Instruction *currentlyBlocked = blockedTasks.front();
+				blockedTasks.pop();
+				if(canResourceRequestBeSatisfied(currentlyBlocked->resource_type, currentlyBlocked->arg5)){
+					if(pretendToGrantRequest(currentlyBlocked->task_number, currentlyBlocked->resource_type, currentlyBlocked->arg5)){
 						Request(currentlyBlocked->task_number, currentlyBlocked->delay, currentlyBlocked->resource_type, currentlyBlocked->arg5);
 					}
 				}
-				blocked.push(currentlyBlocked);
+				blockedTasks.push(currentlyBlocked);
 			}
 		}
 		else if(currentInstruction->command == "terminate"){
