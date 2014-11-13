@@ -104,6 +104,13 @@ void Operating_System::increaseWaitingTimeOfAllWaitingTasks(int number){
 	}
 }
 
+bool checkSafeState(){
+	if( safe ){
+		return true;
+	}
+	return false;
+}
+
 //deadlock = all non terminated tasks have outstanding requests that the manager cannot satisfy 
 bool Operating_System::checkDeadlock(){
 
@@ -186,6 +193,18 @@ void Operating_System::runBankers(){
 	//  HAS!! 
 
 	// 	When the manager receives a request, it pretends to grant it, and then checks if the resulting state is safe.
+	/////////////////////
+	for(int i=0; i< allInstructions.size(); i++){
+		Instruction *currentInstruction = allInstructions[i];
+		if(currentInstruction->command == "request"){
+			//pretend to grant it
+			tasks[currentInstruction->task_number-1]->addResources(resource_type, number_requested);
+			//check the state
+			if(!checkSafeState()){
+				blockedTasks.push(tasks[currentInstruction->task_number-1]);
+			}
+		}
+	}
 	//  If it is safe, the request is really granted; if it is not safe the process is blocked (that is, the request is held up).
 	//  When a resource is returned, the manager (politely thanks the process and then) checks to see if the first pending requests 
 	//  can be granted (i.e., if the result would now be safe). If so, the pending request is granted. Whether or not the request 
