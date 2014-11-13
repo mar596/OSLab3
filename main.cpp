@@ -11,7 +11,6 @@
 
 using namespace std;
 
-
 int main(int argc, char* argv[]){
 
 	if(argc != 2){ // the second argument on command line is the input file 
@@ -21,7 +20,3 @@ int main(int argc, char* argv[]){
 
 	Operating_System os(argv[1]);
 }
-
-
-
-

@@ -8,13 +8,14 @@
 #include "Operating_System.h"
 
 Operating_System::Operating_System(string file){
-	//open the file
+
 	cycles = 0;
 
+	//open the file 
 	ifstream input_file;
 	input_file.open(file);
 
-	if(input_file.is_open()){ //check if the file is open
+	if(input_file.is_open()){ 
 		int resources[10]; // limit to 10 number of resource units 
 
 		int numberOfTasks, numberOfResourceTypes;
@@ -45,13 +46,14 @@ Operating_System::Operating_System(string file){
 	}
 	input_file.close();
 }
-
+//TODO --> make sure tasks are in order -- needs to be pushed in order
 void Operating_System::Initiate(int task_number, int resource_type, int initial_claim){
-	Task *t = new Task(task_number, initial_claim, cycles);
-	//resource type and initial claim are important for bankers 
-	tasks.push_back(t); //make sure tasks are in order -- needs to be pushed in order
-						//so tasks[0] represents task 1, task[1] = task 2, etc. 
-	increaseWaitingTimeOfAllWaitingTasks(1);
+
+	if(initial_claim <= resources[resource_type-1]){
+		Task *t = new Task(task_number, initial_claim, cycles);
+		tasks.push_back(t); 
+		increaseWaitingTimeOfAllWaitingTasks(1);
+	}
 	cycles+=1;
 }
 
@@ -79,8 +81,7 @@ void Operating_System::Terminate(int task_number, int delay){
 }
 
 bool Operating_System::canResourceRequestBeSatisfied(int resource_type, int number_requested){
-	int correct_resource_type = resource_type-1; //subtract 1 to get the correct resource
-	if(number_requested <= resources[correct_resource_type]){
+	if(number_requested <= resources[resource_type-1]){
 		return true;
 	}
 	return false;
@@ -107,6 +108,7 @@ void Operating_System::increaseWaitingTimeOfAllWaitingTasks(int number){
 bool Operating_System::checkDeadlock(){
 
 	bool deadlock = true;
+
 	for(int i=0; i<waiting_request_instructions_queue.size(); i++){
 		Instruction *currentRequest = waiting_request_instructions_queue.front();
 		waiting_request_instructions_queue.pop();
@@ -115,6 +117,7 @@ bool Operating_System::checkDeadlock(){
 		}
 		waiting_request_instructions_queue.push(currentRequest);	
 	}
+
 	if(deadlock == false){
 		return false;
 	}
@@ -172,9 +175,20 @@ void Operating_System::runOptimistic(){
 			}
 		}
 	}
+
 	printOutput();		
 }
 
 void Operating_System::runBankers(){
+	//  before execution begins, ensure the system is in a safe state -->  check that no process 
+	//  claims more than the manager has
+	//  I DO THIS IN INITIATE -- I DONT EVEN ADD A PROCESS IF IT TRIES TO CLAIM MORE THAN THE MANAGER
+	//  HAS!! 
+
+	// 	When the manager receives a request, it pretends to grant it, and then checks if the resulting state is safe.
+	//  If it is safe, the request is really granted; if it is not safe the process is blocked (that is, the request is held up).
+	//  When a resource is returned, the manager (politely thanks the process and then) checks to see if the first pending requests 
+	//  can be granted (i.e., if the result would now be safe). If so, the pending request is granted. Whether or not the request 
+	//  was granted, the manager checks to see if the next pending request can be granted, etc.
 
 }
