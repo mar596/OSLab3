@@ -36,7 +36,7 @@ private:
 	queue<Instruction*> waiting_request_instructions_queue;
 	vector<int> resources;
 	vector<Task*> tasks; //vector of pointers to tasks 
-	vector<Task*> blockedTasks;
+	queue<Instruction*> blockedTasks;
 	int cycles;
 
 	void Initiate(int task_number, int resource_type, int initial_claim);

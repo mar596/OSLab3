@@ -123,6 +123,7 @@ bool Operating_System::pretendToGrantRequest(int task_number, int resource_type,
 	return true;
 
 }
+
 //deadlock = all non terminated tasks have outstanding requests that the manager cannot satisfy 
 bool Operating_System::checkDeadlock(){
 
@@ -211,20 +212,33 @@ void Operating_System::runBankers(){
 	//  HAS!! 
 
 	// 	When the manager receives a request, it pretends to grant it, and then checks if the resulting state is safe.
-	/////////////////////
-	for(int i=0; i< allInstructions.size(); i++){
-		Instruction *currentInstruction = allInstructions[i];
-		if(currentInstruction->command == "request"){
-			pretendToGrantRequest(currentInstruction->task_number, currentInstruction->resource_type, currentInstruction->number_requested);
-			//check the state
-			if(!checkSafeState()){
-				blockedTasks.push(tasks[currentInstruction->task_number-1]);
-			}
-		}
-	}
 	//  If it is safe, the request is really granted; if it is not safe the process is blocked (that is, the request is held up).
 	//  When a resource is returned, the manager (politely thanks the process and then) checks to see if the first pending requests 
 	//  can be granted (i.e., if the result would now be safe). If so, the pending request is granted. Whether or not the request 
 	//  was granted, the manager checks to see if the next pending request can be granted, etc.
-
+	/////////////////////
+	for(int i=0; i< allInstructions.size(); i++){
+		Instruction *currentInstruction = allInstructions[i];
+		if(currentInstruction->command == "request"){
+			if(pretendToGrantRequest(currentInstruction->task_number, currentInstruction->resource_type, currentInstruction->number_requested)){
+				Request(currentInstruction->task_number, currentInstruction->delay, currentInstruction->resource_type, currentInstruction->arg5);
+			}
+			else{
+				blocked.push(currentInstruction);
+			}
+		}
+		else if(currentInstruction->command == "release"){
+			Release(currentInstruction->task_number, currentInstruction->delay, currentInstruction->resource_type, currentInstruction->arg5);
+			for(int j=0; j < blocked.size(); j++){
+				Instruction currentlyBlocked = blocked.front();
+				blocked.pop();
+				if(canResourceRequestBeSatisfied(currentlyBlocked->resource_type, currentlyBlocked->number_requested)){
+					if(pretendToGrantRequest(currentlyBlocked->task_number, currentlyBlocked->resource_type, currentlyBlocked->number_requested)){
+						Request(currentlyBlocked->task_number, currentlyBlocked->delay, currentlyBlocked->resource_type, currentlyBlocked->arg5);
+					}
+				}
+				blocked.push(currentlyBlocked);
+			}
+		}
+	}
 }
