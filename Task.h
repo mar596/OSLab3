@@ -24,9 +24,10 @@ public:
 	void setRunning(){task_state = RUNNING;}
 	void setTerminated(){task_state = TERMINATED;}
 	void setWaiting(){task_state = WAITING;}
-
-	void increaseWaitingTime(int n){timeSpentWaiting+=n;}
+	void setMaxAdditional(int number_requested){maxAdditional = initial_claim - number_requested;}
 	void setFinishCycle(int cycle){finish = cycle;}
+	void undoMaxAdditional(int number_requested){maxAdditional = initial_claim + number_requested;}
+	void increaseWaitingTime(int n){timeSpentWaiting+=n;}
 
  	//getters
 	int getInitialClaim() const{return initial_claim;}
@@ -34,6 +35,7 @@ public:
 	int getTimeSpentWaiting() const{return timeSpentWaiting;}
 	int getTimeNeededToFinish() const{return (finish == -1 ? -1 : finish-start);}
 	int getPercentageOfTimeSpentWaiting() const {return timeSpentWaiting / (finish - start);}
+	int getMaxAdditional(){return maxAdditional;}
 
 	bool isInitialized(){return task_state == INITIALIZED;}
 	bool isRunning(){return task_state == RUNNING;}
@@ -49,6 +51,7 @@ private:
  		TERMINATED   
  	};
 
+ 	int maxAdditional;
 	int timeSpentWaiting;
 	int task_number;
 	int initial_claim; 

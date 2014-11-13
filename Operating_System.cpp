@@ -104,32 +104,49 @@ void Operating_System::increaseWaitingTimeOfAllWaitingTasks(int number){
 	}
 }
 
-bool checkSafeState(){
+bool Operating_System::checkSafeState(){
 	if( safe ){
 		return true;
 	}
 	return false;
 }
 
+bool Operating_System::pretendToGrantRequest(int task_number, int resource_type, int number_requested){
+	tasks[task_number-1]->addResources(resource_type, number_requested);
+	tasks[task_number-1]->setMaxAdditional(number_requested);
+	if(tasks[task_number-1]->getMaxAdditional() > resources[resource_type-1]){
+		tasks[task_number-1]->undoMaxAdditional(number_requested);
+		tasks[task_number-1]->releaseResources(resource_type, number_requested);
+		return false;
+	}
+	tasks[task_number-1]->releaseResources(resource_type, number_requested);
+	return true;
+
+}
 //deadlock = all non terminated tasks have outstanding requests that the manager cannot satisfy 
 bool Operating_System::checkDeadlock(){
 
 	bool deadlock = true;
 
-	for(int i=0; i<waiting_request_instructions_queue.size(); i++){
-		Instruction *currentRequest = waiting_request_instructions_queue.front();
-		waiting_request_instructions_queue.pop();
-		if(canResourceRequestBeSatisfied(currentRequest->resource_type, currentRequest->arg5)){
-			deadlock = false;
+	if(waiting_request_instructions_queue.size() == tasks.size()){
+		for(int i=0; i<waiting_request_instructions_queue.size(); i++){
+			Instruction *currentRequest = waiting_request_instructions_queue.front();
+			waiting_request_instructions_queue.pop();
+			if(canResourceRequestBeSatisfied(currentRequest->resource_type, currentRequest->arg5)){
+				deadlock = false;
+			}
+			waiting_request_instructions_queue.push(currentRequest);	
 		}
-		waiting_request_instructions_queue.push(currentRequest);	
+		if(deadlock == false){
+			return false;
+		}
+		cout << "Deadlock detected!!";
+		return true;
 	}
-
-	if(deadlock == false){
+	else{
 		return false;
 	}
-	cout << "Deadlock detected!";
-	return true;
+
 }
 
 //abort the first task in the waiting queue, add the resources back to the 
@@ -137,9 +154,10 @@ bool Operating_System::checkDeadlock(){
 //do this until deadlock is resolved and resource manager has enough resources to satisfy
 //the next request in the waiting queue
 void Operating_System::handleDeadlock(){
-	while(checkDeadlock()){
-		Instruction *currentRequest = waiting_request_instructions_queue.front();
-		resources[currentRequest->resource_type-1]+= currentRequest->arg5;
+	while(!canResourceRequestBeSatisfied(waiting_request_instructions_queue.front()->resource_type, waiting_request_instructions_queue.front()->number_requested)){
+		resources[waiting_request_instructions_queue.front()->resource_type-1]+= waiting_request_instructions_queue.front()->arg5;
+		waiting_request_instructions_queue.pop(); //abort the process 
+
 	}
 }
 
@@ -197,8 +215,7 @@ void Operating_System::runBankers(){
 	for(int i=0; i< allInstructions.size(); i++){
 		Instruction *currentInstruction = allInstructions[i];
 		if(currentInstruction->command == "request"){
-			//pretend to grant it
-			tasks[currentInstruction->task_number-1]->addResources(resource_type, number_requested);
+			pretendToGrantRequest(currentInstruction->task_number, currentInstruction->resource_type, currentInstruction->number_requested);
 			//check the state
 			if(!checkSafeState()){
 				blockedTasks.push(tasks[currentInstruction->task_number-1]);
