@@ -48,12 +48,9 @@ Operating_System::Operating_System(string file){
 }
 //TODO --> make sure tasks are in order -- needs to be pushed in order
 void Operating_System::Initiate(int task_number, int resource_type, int initial_claim){
-
-	if(initial_claim <= resources[resource_type-1]){
-		Task *t = new Task(task_number, initial_claim, cycles);
-		tasks.push_back(t); 
-		increaseWaitingTimeOfAllWaitingTasks(1);
-	}
+	Task *t = new Task(task_number, initial_claim, cycles);
+	tasks.push_back(t); 
+	increaseWaitingTimeOfAllWaitingTasks(1);
 	cycles+=1;
 }
 
@@ -219,6 +216,11 @@ void Operating_System::runBankers(){
 	/////////////////////
 	for(int i=0; i< allInstructions.size(); i++){
 		Instruction *currentInstruction = allInstructions[i];
+		if(currentInstruction-> command == "initiate"){
+			if(currentInstruction->arg5 < resources[currentInstruction->resource_type-1]){
+				Initiate(currentInstruction->task_number, currentInstruction->resource_type, currentInstruction->arg5);
+			}
+		}
 		if(currentInstruction->command == "request"){
 			if(pretendToGrantRequest(currentInstruction->task_number, currentInstruction->resource_type, currentInstruction->number_requested)){
 				Request(currentInstruction->task_number, currentInstruction->delay, currentInstruction->resource_type, currentInstruction->arg5);
@@ -240,5 +242,9 @@ void Operating_System::runBankers(){
 				blocked.push(currentlyBlocked);
 			}
 		}
+		else if(currentInstruction->command == "terminate"){
+			Terminate(currentInstruction->task_number, currentInstruction->delay);
+		}
 	}
+	printOutput();
 }
