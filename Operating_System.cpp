@@ -15,7 +15,7 @@ Operating_System::Operating_System(string file){
 	input_file.open(file);
 
 	if(input_file.is_open()){ //check if the file is open
-		int amountOfEachResource[10]; // limit to 10 number of resource units 
+		int resources[10]; // limit to 10 number of resource units 
 
 		int numberOfTasks, numberOfResourceTypes;
 
@@ -25,7 +25,7 @@ Operating_System::Operating_System(string file){
 		//grab the number of each resource
 		if(numberOfResourceTypes <=10){
 			for(int i=0; i< numberOfResourceTypes; i++){
-				input_file >> amountOfEachResource[i];
+				input_file >> resources[i];
 			}			
 		}
 
@@ -118,6 +118,7 @@ bool Operating_System::checkDeadlock(){
 	if(deadlock == false){
 		return false;
 	}
+	cout << "Deadlock detected!";
 	return true;
 }
 
@@ -129,6 +130,15 @@ void Operating_System::handleDeadlock(){
 	while(checkDeadlock()){
 		Instruction *currentRequest = waiting_request_instructions_queue.front();
 		resources[currentRequest->resource_type-1]+= currentRequest->arg5;
+	}
+}
+
+void printOutput(){
+	for(int i = 0; i < tasks.size(); i++){
+		cout << "Task" << tasks[i]->task_number << ".\n";
+		cout << "Time Taken: " << tasks[i]->getTimeNeededToFinish() << ".\n";
+		cout << "Waiting Time: " << tasks[i]->getTimeSpentWaiting() << ".\n";
+		cout << "Percentage of Time Spent Waiting:" << tasks[i]->getPercentageOfTimeSpentWaiting() << ".\n";
 	}
 }
 
@@ -161,7 +171,8 @@ void Operating_System::runOptimistic(){
 				handleDeadlock();
 			}
 		}
-	}		
+	}
+	printOutput();		
 }
 
 void Operating_System::runBankers(){

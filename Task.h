@@ -33,7 +33,8 @@ public:
 	int getTaskNumber() const{return task_number;}
 	int getTimeSpentWaiting() const{return timeSpentWaiting;}
 	int getTimeNeededToFinish() const{return (finish == -1 ? -1 : finish-start);}
-
+	int getPercentageOfTimeSpentWaiting() const {return timeSpentWaiting / (finish - start);}
+	
 	bool isInitialized(){return task_state == INITIALIZED;}
 	bool isRunning(){return task_state == RUNNING;}
 	bool isTerminated(){return task_state == TERMINATED;}

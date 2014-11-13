@@ -26,7 +26,7 @@ public:
 private:
 	struct Instruction{
 		string command;
-		int task_number;
+		int task_number; 
 		int delay;
 		int resource_type;
 		int arg5;
@@ -48,6 +48,8 @@ private:
 	bool check_manager(int resource_type);
 	bool checkDeadlock();
 	void handleDeadlock();
+
+	void printOutput();
 
 };
 
